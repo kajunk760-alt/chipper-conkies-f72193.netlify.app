@@ -1,0 +1,27 @@
+{
+  "background_color": "#000000",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Attendance app",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Attendance app",
+  "start_url": "/",
+  "theme_color": "#df11de",
+  "icons": [
+    {
+      "src": "https://chipper-conkies-f72193.netlify.app/favicon.ico",
+      "type": "image/x-icon",
+      "isSquare": false,
+      "isPng": false,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 0,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
+    }
+  ],
+  "id": "Attendance",
+  "description": "This app helps you easily track and manage daily attendance.\""
+}
