@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Student Attendance Management</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    padding: 15px;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px #cccccc;
+}
+
+h1 {
+    text-align: center;
+    color: #174ea6;
+    font-size: 24px;
+}
+
+input, button {
+    width: 100%;
+    padding: 12px;
+    margin: 7px 0;
+    box-sizing: border-box;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+input {
+    border: 1px solid #aaa;
+}
+
+button {
+    border: none;
+    color: white;
+    background: #174ea6;
+    cursor: pointer;
+}
+
+.present {
+    background: #188038;
+}
+
+.absent {
+    background: #d93025;
+}
+
+.delete {
+    background: #555;
+}
+
+.student {
+    background: #f5f7fa;
+    border: 1px solid #ddd;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+.stats {
+    background: #e8f0fe;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 8px;
+}
+
+.small {
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Student Attendance Management</h1>
+
+<h3>Add Student</h3>
+
+<input
+    type="text"
+    id="studentName"
+    placeholder="Enter Student Name"
+>
+
+<input
+    type="text"
+    id="rollNumber"
+    placeholder="Enter Roll Number"
+>
+
+<button onclick="addStudent()">Add Student</button>
+
+<div class="stats">
+    <h3>Attendance Summary</h3>
+    <p>Total Students: <span id="total">0</span></p>
+    <p>Present Today: <span id="presentCount">0</span></p>
+    <p>Absent Today: <span id="absentCount">0</span></p>
+</div>
+
+<h3>Student List</h3>
+
+<div id="studentList"></div>
+
+</div>
+
+<script>
+
+let students = [];
+
+try {
+    students = JSON.parse(
+        localStorage.getItem("attendanceStudents")
+    ) || [];
+} catch (error) {
+    students = [];
+}
+
+function saveData() {
+    localStorage.setItem(
+        "attendanceStudents",
+        JSON.stringify(students)
+    );
+}
+
+function addStudent() {
+
+    let name = document.getElementById("studentName")
+        .value.trim();
+
+    let roll = document.getElementById("rollNumber")
+        .value.trim();
+
+    if (name === "" || roll === "") {
+        alert("Please enter student name and roll number!");
+        return;
+    }
+
+    let duplicate = students.some(
+        student => student.roll.toLowerCase() === roll.toLowerCase()
+    );
+
+    if (duplicate) {
+        alert("This roll number already exists!");
+        return;
+    }
+
+    students.push({
+        name: name,
+        roll: roll,
+        present: 0,
+        total: 0,
+        today: ""
+    });
+
+    document.getElementById("studentName").value = "";
+    document.getElementById("rollNumber").value = "";
+
+    saveData();
+    displayStudents();
+}
+
+function markAttendance(index, status) {
+
+    let today = new Date().toISOString().slice(0, 10);
+
+    let student = students[index];
+
+    if (student.today === today) {
+        alert("Attendance already marked for today!");
+        return;
+    }
+
+    student.total++;
+
+    if (status === "Present") {
+        student.present++;
+    }
+
+    student.today = today;
+
+    saveData();
+    displayStudents();
+}
+
+function deleteStudent(index) {
+
+    if (confirm("Delete this student?")) {
+        students.splice(index, 1);
+        saveData();
+        displayStudents();
+    }
+}
+
+function displayStudents() {
+
+    let list = document.getElementById("studentList");
+
+    list.innerHTML = "";
+
+    let presentToday = 0;
+    let absentToday = 0;
+
+    let today = new Date().toISOString().slice(0, 10);
+
+    students.forEach((student, index) => {
+
+        let percentage = student.total > 0
+            ? ((student.present / student.total) * 100).toFixed(1)
+            : "0.0";
+
+        let status = "Not Marked";
+
+        if (student.today === today) {
+            if (student.total > 0 &&
+                student.present > 0) {
+
+                // Today's status is stored separately below.
+                status = student.todayStatus || "Present";
+
+            } else {
+                status = student.todayStatus || "Absent";
+            }
+        }
+
+        if (student.today === today) {
+            if (status === "Present") {
+                presentToday++;
+            } else if (status === "Absent") {
+                absentToday++;
+            }
+        }
+
+        let card = document.createElement("div");
+        card.className = "student";
+
+        let title = document.createElement("h3");
+        title.textContent = student.name;
+
+        let roll = document.createElement("p");
+        roll.textContent = "Roll Number: " + student.roll;
+
+        let attendance = document.createElement("p");
+        attendance.textContent =
+            "Attendance: " + percentage + "%";
+
+        let count = document.createElement("p");
+        count.textContent =
+            "Present: " + student.present +
+            " / Total marked days: " + student.total;
+
+        let currentStatus = document.createElement("p");
+        currentStatus.textContent = "Today's Status: " + status;
+
+        let presentButton = document.createElement("button");
+        presentButton.className = "present";
+        presentButton.textContent = "Mark Present";
+        presentButton.onclick = function() {
+            markAttendance(index, "Present");
+        };
+
+        let absentButton = document.createElement("button");
+        absentButton.className = "absent";
+        absentButton.textContent = "Mark Absent";
+        absentButton.onclick = function() {
+            markAttendance(index, "Absent");
+        };
+
+        let deleteButton = document.createElement("button");
+        deleteButton.className = "delete";
+        deleteButton.textContent = "Delete Student";
+        deleteButton.onclick = function() {
+            deleteStudent(index);
+        };
+
+        card.appendChild(title);
+        card.appendChild(roll);
+        card.appendChild(attendance);
+        card.appendChild(count);
+        card.appendChild(currentStatus);
+        card.appendChild(presentButton);
+        card.appendChild(absentButton);
+        card.appendChild(deleteButton);
+
+        list.appendChild(card);
+    });
+
+    document.getElementById("total").textContent =
+        students.length;
+
+    document.getElementById("presentCount").textContent =
+        presentToday;
+
+    document.getElementById("absentCount").textContent =
+        absentToday;
+}
+
+displayStudents();
+
+</script>
+
+</body>
+</html>
